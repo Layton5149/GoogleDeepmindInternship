@@ -11,7 +11,6 @@ from sklearn.model_selection import train_test_split
 from imblearn.over_sampling import SMOTE
 from sklearn.preprocessing import StandardScaler
 from micromlgen import port
-import joblib  # for saving/loading sklearn models
 
 
 def plotSegmentsSubplots(signal, fs, length):
@@ -220,10 +219,6 @@ def main():
     featureList["classifier"] = signalsegmentClassifierArray
 
     df = pd.DataFrame(featureList)
-
-    print (df[df['classifier'] == 1].shape[0])
-    print (df[df['classifier'] == 0].shape[0])
-
     df.dropna(axis=0, how='all', inplace=True)
 
     # Separate features and target
@@ -240,13 +235,19 @@ def main():
     # Train-test split
     x_train, x_test, y_train, y_test = train_test_split(x_imputed, y, test_size=0.2, random_state=42)
     # Random Forest
-    clf = RandomForestClassifier(n_estimators=100, random_state=42)
+    clf = RandomForestClassifier(n_estimators=50, random_state=42, max_depth=5)
     clf.fit(x_train, y_train)
     # Predict and report
     y_pred = clf.predict(x_test)
     print("📊 Classification Report:")
     print(classification_report(y_test, y_pred, digits=4))
     print (df.head(20))
+
+    importances = clf.feature_importances_
+
+    # Print them
+    for feature, importance in zip(df.columns, importances):
+        print(f"{feature}: {importance:.4f}")
 
     saveClassifierAsCCode(clf)
 
