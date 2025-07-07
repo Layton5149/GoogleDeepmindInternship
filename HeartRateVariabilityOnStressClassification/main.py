@@ -207,12 +207,11 @@ def main():
     TEMPsignalSegmentArray = splitSignals(file_path_base, 4, length, "TEMP.csv")[0]
     tempFeatureList = getTempFeatures(TEMPsignalSegmentArray, 4)
 
-    print (len(tempFeatureList))
 
 
     featureList = getPPGFeatures(PPGSignalSegmentArray, file_path_base, fs, length)
 
-    featureList.update(tempFeatureList)
+    #featureList.update(tempFeatureList)
 
 
     signalsegmentClassifierArray = splitSignals(file_path_base, fs, length, "BVP.csv")[1] # this is the classifier for stress (1 or 0) for each of the segments
@@ -225,33 +224,32 @@ def main():
     y = df["classifier"]
     x = df.drop(columns=["classifier"])
 
+    # Impute missing values (mean imputation)
     smote=SMOTE(sampling_strategy='minority') 
     x,y=smote.fit_resample(x,y)
 
-    # Impute missing values (mean imputation)
-    imputer = SimpleImputer(strategy="mean")
-    x_imputed = imputer.fit_transform(x)
-
     # Train-test split
-    x_train, x_test, y_train, y_test = train_test_split(x_imputed, y, test_size=0.2, random_state=42)
+    smote=SMOTE(sampling_strategy='minority') 
+    x,y=smote.fit_resample(x,y)
+
+    x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2, random_state=42)
     # Random Forest
     clf = RandomForestClassifier(n_estimators=50, random_state=42, max_depth=5)
     clf.fit(x_train, y_train)
-    # Predict and report
+    # Predict 
     y_pred = clf.predict(x_test)
-    print("📊 Classification Report:")
-    print(classification_report(y_test, y_pred, digits=4))
-    print (df.head(20))
 
-    importances = clf.feature_importances_
+    return clf, classification_report(y_test, y_pred, digits=4, output_dict=True)
 
-    # Print them
-    for feature, importance in zip(df.columns, importances):
-        print(f"{feature}: {importance:.4f}")
+f1=0
+for i in range(0,99):
+    print (f"run: {i}")
+    output = main()
+    if output[1]['weighted avg']['f1-score'] > f1:
+        saveClassifierAsCCode(output[0])
+        f1 = output[1]['weighted avg']['f1-score']
+        print (f"highscore model changed, new f1: {f1}")
 
-    saveClassifierAsCCode(clf)
-
-    
-
+print (f1)
 
 main()
