@@ -9,6 +9,10 @@ from sklearn.impute import SimpleImputer
 from sklearn.metrics import classification_report
 from sklearn.model_selection import train_test_split
 from imblearn.over_sampling import SMOTE
+from sklearn.preprocessing import StandardScaler
+from micromlgen import port
+import joblib  # for saving/loading sklearn models
+
 
 def plotSegmentsSubplots(signal, fs, length):
     #THIS COULD BE REFINED
@@ -187,6 +191,11 @@ def getTempFeatures(signalSegmentArray, fs):
 
     return features
 
+def saveClassifierAsCCode(classifier):
+    c_code = port(classifier)
+    with open("random_forest_model.h", "w") as f:
+        f.write(c_code)
+
 def main():
     fs = 64
     length = 60 #60 second segments
@@ -230,16 +239,16 @@ def main():
 
     # Train-test split
     x_train, x_test, y_train, y_test = train_test_split(x_imputed, y, test_size=0.2, random_state=42)
-
     # Random Forest
-    clf = RandomForestClassifier(n_estimators=100, random_state=42, class_weight="balanced")
+    clf = RandomForestClassifier(n_estimators=100, random_state=42)
     clf.fit(x_train, y_train)
-
     # Predict and report
     y_pred = clf.predict(x_test)
     print("📊 Classification Report:")
     print(classification_report(y_test, y_pred, digits=4))
     print (df.head(20))
+
+    saveClassifierAsCCode(clf)
 
     
 
