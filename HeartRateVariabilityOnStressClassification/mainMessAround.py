@@ -11,7 +11,6 @@ from sklearn.model_selection import train_test_split
 from imblearn.over_sampling import SMOTE
 from sklearn.preprocessing import StandardScaler
 from micromlgen import port
-from sklearn.svm import SVC
 
 
 def plotSegmentsSubplots(signal, fs, length):
@@ -202,8 +201,8 @@ def main():
     file_path_base = "Dataset/Data_29_subjects/Subjects/subject_"
     PPGSignalSegmentArray = splitSignals(file_path_base, fs, length, "BVP.csv")[0] # use this to extract features about each PPG segment
 
-    #EDASignalSegmentArray = splitSignals(file_path_base, 4,length, "EDA.csv")[0] # use this to get features for each EDA segment
-    #getEDAFeatures(EDASignalSegmentArray, 1, 1)
+    EDASignalSegmentArray = splitSignals(file_path_base, 4,length, "EDA.csv")[0] # use this to get features for each EDA segment
+    getEDAFeatures(EDASignalSegmentArray, 1, 1)
 
     TEMPsignalSegmentArray = splitSignals(file_path_base, 4, length, "TEMP.csv")[0]
     tempFeatureList = getTempFeatures(TEMPsignalSegmentArray, 4)
@@ -219,7 +218,6 @@ def main():
 
     df = pd.DataFrame(featureList)
     df.dropna(axis=0, how='all', inplace=True)
-    print (len(df))
 
     # Separate features and target
     y = df["classifier"]
@@ -230,27 +228,16 @@ def main():
 
     x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.25, random_state=42)
     # Random Forest
-    clf = RandomForestClassifier(n_estimators=50, random_state=42, max_leaf_nodes=40)
+    clf = RandomForestClassifier(n_estimators=100, random_state=42)
     clf.fit(x_train, y_train)
     # Predict 
     y_pred = clf.predict(x_test)
 
+    y_train_pred = clf.predict(x_train)
+    print (classification_report(y_train, y_train_pred, digits = 4))
+
     print ( clf, classification_report(y_test, y_pred, digits=4))
     saveClassifierAsCCode(clf)
-
-    #SVM Model
-
-    scaler = StandardScaler()
-    X_train_scaled = scaler.fit_transform(x_train)
-    X_test_scaled = scaler.transform(x_test)
-    clf_svm = SVC(kernel='rbf', C=1, gamma='scale', random_state=42)
-    
-    clf_svm.fit(X_train_scaled, y_train)
-    y_pred_svm = clf_svm.predict(X_test_scaled)
-    print("=== SVM (RBF Kernel) ===")
-    print(classification_report(y_test, y_pred_svm, digits=4))
-
-    #return clf, classification_report(y_test, y_pred, digits=4, output_dict=True)
 
 
 #shennanigans
@@ -259,9 +246,9 @@ def main():
  #   print (f"run: {i}")
   #  output = main()
    # if output[1]['weighted avg']['f1-score'] > f1:
-    #    saveClassifierAsCCode(output[0])
-     #   f1 = output[1]['weighted avg']['f1-score']
-      #  print (f"highscore model changed, new f1: {f1}")
+        #saveClassifierAsCCode(output[0])
+    #    f1 = output[1]['weighted avg']['f1-score']
+     #   print (f"highscore model changed, new f1: {f1}")
 
 #print (f1)
 
