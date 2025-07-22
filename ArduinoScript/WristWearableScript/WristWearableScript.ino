@@ -5,9 +5,39 @@
 
 MAX30105 particleSensor;
 
+Eloquent::ML::Port::RandomForest model;
+
+float signalList[960] = {0};  // Initialize all to 0
+int arrayIndex = 0;
+float dcAverage = 80235;      // Start at first placeholder value
+float alpha = 0.95; // For DC removal (IIR high-pass)
+
+// placeholder ir values for testing 
+float placeHolderArray[100] = {
+  80235, 80240, 80250, 80263, 80278, 80291, 80301, 80304, 80299, 80287,
+  80269, 80247, 80228, 80215, 80210, 80214, 80226, 80242, 80259, 80274,
+  80286, 80293, 80297, 80295, 80288, 80276, 80259, 80240, 80222, 80210,
+  80208, 80216, 80234, 80257, 80279, 80295, 80305, 80308, 80303, 80291,
+  80273, 80252, 80231, 80215, 80208, 80212, 80226, 80245, 80264, 80280,
+  80291, 80297, 80298, 80294, 80284, 80270, 80252, 80232, 80217, 80209,
+  80211, 80224, 80244, 80264, 80281, 80292, 80297, 80297, 80292, 80281,
+  80264, 80245, 80227, 80214, 80209, 80214, 80228, 80247, 80266, 80281,
+  80291, 80296, 80296, 80291, 80281, 80266, 80248, 80230, 80217, 80211,
+  80215, 80228, 80246, 80265, 80280, 80290, 80295, 80296, 80291, 80281
+};
+int in = 0;
+
+void getPPGFeatures(float signal[]) {
+  return;
+}
+
 void setup() {
   Serial.begin(9600);
+  delay(2000);
   Serial.println("Starting sensor...");
+
+  Serial.println("hello world");
+  Serial.println("hello world");
   /*Wire.begin();
 
   if (!particleSensor.begin(Wire, I2C_SPEED_STANDARD)) {
@@ -43,14 +73,43 @@ void setup() {
     -0.5,  // BVP Kurtosis
   };
 
-  Eloquent::ML::Port::RandomForest model;
   int prediction = model.predict(features);
   Serial.println(prediction);
+  Serial.println("hello world");
+
+  static float dcAverage = placeHolderArray[0];
 
 }
 
 void loop() {
-  Serial.println("hello world");
 
-  delay(10); // adjust for sample rate
+  // Read new IR value
+  if (1/*particleSensor.check() == true*/) {
+    long rawIR = placeHolderArray[in]; // will be particleSensor.getIR()
+    in = in + 1;
+
+    // Ignore faulty readings
+    if (rawIR < 50000) {
+      return;
+    }
+
+    // 1️⃣ DC Removal (High-pass filter)
+    dcAverage = alpha * dcAverage + (1 - alpha) * rawIR;
+    float acComponent = rawIR - dcAverage;
+
+    // 2️⃣ Optional: Low-pass filter (~4 Hz) using simple IIR
+    static float prevFiltered = 0;
+    float beta = 0.2;  // adjust for smoothing
+    float filtered = beta * acComponent + (1 - beta) * prevFiltered;
+    prevFiltered = filtered;
+
+    // 3️⃣ Store in buffer for future processing (if needed)
+    signalList[arrayIndex] = 1.0; //WILL BE UPDATED TO STORE IR READ VALUE (AFTER FILTERING)
+    arrayIndex = arrayIndex + 1;
+
+    Serial.println(filtered);
+    
+  }
+
+  delay(100);
 }
