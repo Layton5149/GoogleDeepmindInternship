@@ -1,8 +1,4 @@
-
-
-
-
-
+#Embedded AI for PPG + BLE Health Monitoring   
 
 NanoSense is an embedded AI system designed during my Artificial Intelligence Internship (June–August 2025) to monitor health signals in older adults using photoplethysmography (PPG) and Bluetooth Low Energy (BLE). The pipeline performs signal processing (Butterworth filtering, time-series segmentation), extracts HRV features (e.g., RMSSD, SDNN) along with skewness and kurtosis, and runs an optimized Random Forest classifier directly on an Arduino Nano 33 BLE Sense. Desktop evaluation reached 91% F1, and after model compression/embedded optimizations the on-device model achieved 84% F1 in real-time tests. The repository also includes an ACM-format paper documenting the system design, methodology, and results.   
 
@@ -22,3 +18,13 @@ Reproducible research: ACM-style paper and experiment logs.
 | ------------------- | -------- | -------: |
 | Desktop (Python)    | Macro F1 | **0.91** |
 | On-device (Arduino) | Macro F1 | **0.84** |
+
+   Tech Stack
+
+Hardware: Arduino Nano 33 BLE Sense, external PPG sensor, BLE beacons
+
+Embedded: C/C++ (Arduino), BLE GATT
+
+ML & DSP (desktop): Python, NumPy, pandas, scikit-learn
+
+Signal processing: Butterworth filtering, sliding-window segmentation, HRV metrics (e.g., RMSSD/SDNN), skewness, kurtosis
